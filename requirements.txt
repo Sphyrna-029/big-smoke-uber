@@ -1,0 +1,5 @@
+opencv-python==4.11.0.86
+mss==10.0.0
+numpy==2.2.1
+keyboard==0.13.5
+ultralytics==8.3.63
