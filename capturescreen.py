@@ -2,6 +2,7 @@ import cv2
 import numpy
 import time
 import mss
+import torch
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from pynput import keyboard
@@ -13,14 +14,28 @@ from ultralytics import YOLO
 
 # Declare yolov11 model
 model = YOLO("yolo11n.pt")
+
+# Area we dont want to detect objects in (These objects are still detected just flagged)
 exemption_zone = Polygon([(0, 800), (340, 340), (470, 340), (800, 800)])
+
+# Area of the screen to capture
+monitor = {"top": 240, "left": 560, "width": 800, "height": 600}
 
 ###################### CONFIG ######################
 
 
+# Check for CUDA/GPU
+if torch.cuda.is_available():
+    device = torch.device("cuda")  # Use GPU
+    print("Using GPU:", torch.cuda.get_device_name(0))
+else:
+    device = torch.device("cpu")  # Use CPU
+    print("Using CPU")
+
+
 def predict(chosen_model, img, classes=[], conf=0.5):
     if classes:
-        results = chosen_model.predict(img, classes=classes, conf=conf, device=0)
+        results = chosen_model.predict(img, classes=classes, conf=conf, device=device)
 
     else:
         results = chosen_model.predict(img, conf=conf)
@@ -83,8 +98,7 @@ listener.start()
 
 time.sleep(1)
 with mss.mss() as sct:
-    # Part of the screen to capture
-    monitor = {"top": 240, "left": 560, "width": 800, "height": 600}
+    active_key = none
 
     # Capture loop
     while "Screen capturing":
@@ -97,7 +111,7 @@ with mss.mss() as sct:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Detect objects in our frame
-        img, _ = predict_and_detect(model, img, classes=[9, 2, 7, 11, 0], conf=0.7)
+        img, _ = predict_and_detect(model, img, classes=[9, 2, 7, 11, 0], conf=0.2)
 
         # Get FPS
         fps = "FPS: " + str(round(1 / (time.time() - last_time)))
@@ -107,7 +121,7 @@ with mss.mss() as sct:
         img = cv2.putText(img, str(active_key), (50, 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         # Draw exclusion zone
-        e_zone = numpy.array([[0, 800],[340, 340],[470, 340],[800, 800]], numpy.int32)
+        e_zone = numpy.array([[0, 800],[300, 310],[500, 310],[800, 800]], numpy.int32)
         e_zone = e_zone.reshape((-1,1,2))
         img = cv2.polylines(img, [e_zone], True, (255, 0, 0), 2)
 
