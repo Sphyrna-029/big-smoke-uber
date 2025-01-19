@@ -2,6 +2,7 @@
 Journey to a self driving car in GTA
 
 Requires CUDA Tool Kit 12.4
+Requires python 3.12
 
 ```
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
